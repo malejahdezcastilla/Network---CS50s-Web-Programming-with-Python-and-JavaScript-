@@ -1,0 +1,141 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+    <h1 id="h1_index"> Following </h1>
+        {% if user.is_authenticated %}
+        <div id="new_post_container" class="form-group">
+            <form id="new_post_form" action="{% url "new_post" %}" method="POST" >
+                {% csrf_token %}
+                <span id="new_post_span">New Post</span>
+                <textarea id="text-area-content" name= "post_content" class="form-control" rows= "3" placeholder="What's Up?"></textarea>
+                <button id= "post_button" type="submit" class="btn btn-primary">Post</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class= "posts_container">
+            {% if not posts_from_following %}
+            <h1 id="h1_index"> {{message}} </h1>
+            {% endif %}
+
+            {% for post in page_object %}
+                <div class="post_container">
+                    {% if post.user.username == request.user.get_username %}
+                        <div>
+                            <button id="edit_button" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop-{{ post.id }}">
+                                Edit
+                            </button>
+                        </div>    
+                        
+                        <div class="index_modal_container">
+                            <div class="modal fade" id="staticBackdrop-{{ post.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                              <div class="modal-dialog">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title" id="staticBackdropLabel">Edit Post</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <div class="modal-body">
+                                      <textarea rows= "5" id="post-content-id-{{ post.id }}" class= "form-control" name="post_content_" >{{ post.content }} </textarea>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary" id="save_button" onclick= "saveChanges({{ post.id }})">Save changes</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div> 
+                        </div>        
+                    {% endif %}
+
+                        <div class= "index-post-container">
+                            <div id="link_to_profile_container">
+                                <span id="link_to_profile_span">
+                                    <a class="page-link" id= "link_to_profile_user" href= "{% url "user_profile" post.user.username 1 %}">@{{post.user.get_username}}</a>
+                                </span>
+                            </div>
+                            <div class= "span_post_content">
+                                <span id="content-{{ post.id }}" class="content_p_post">  {{ post.content }}</span><br>
+                            </div>  
+                            <div>
+                                <span id="date_creation" >{{ post.date_creation }}</span><br>
+                            </div>  
+                            <div class="index_likes_container">
+                                {% csrf_token %}
+                                {% if request.user in post.liked_by.all %}
+
+                                <button hidden id="like_button_{{post.id}}" type="button" class="btn-like" aria-label="like" onclick = "like({{ post.id }})">
+                                    <span> <i id="like_icon" class="bi bi-star"> </i> </span><br>
+                                </button>
+
+                                <button id="unlike_button_{{post.id}}" type="button" class="btn-unlike" aria-label="unlike" onclick = "unlike({{ post.id }})">
+                                    <span> <i id="unlike_icon" class="bi bi-star-fill"> </i> </span><br>
+                                </button>
+                                
+                                {% else %}
+                                <button id="like_button_{{post.id}}" type="button" class="btn-like" aria-label="like" onclick = "like({{ post.id }})">
+                                    <span> <i id="like_icon" class="bi bi-star"> </i> </span><br>
+                                </button>
+                                
+                                <button hidden id="unlike_button_{{post.id}}" type="button" class="btn-unlike" aria-label="unlike" onclick = "unlike({{ post.id }})">
+                                    <span> <i id="unlike_icon" class="bi bi-star-fill"> </i> </span><br>
+                                </button>
+
+                                {% endif %}
+
+                                {% if post.user.username != request.user.get_username %}
+                                {% if post.liked_by.count > 0 %}
+                                    <span class= "num_likes"  id="likes_{{post.id}}">{{post.liked_by.count}}</span><br>
+                                {% else %}
+                                    <span class= "num_likes" id="likes_{{post.id}}"></span><br>
+                                {% endif %}  
+
+                                {% elif post.liked_by.count == 0 and post.user.username == request.user.get_username %} 
+                                <span hidden class="bi bi-star"></span><br>
+                                
+                                {% elif post.user.username == request.user.get_username and post.liked_by.count > 0 %}
+                                    <span class= "num_likes" id="likes_{{ post.id }}" class="bi bi-star">{{post.liked_by.count}}</span><br>
+                                {% endif %}
+                            </div>  
+                        </div>    
+        </div>
+        {% endfor %}
+
+        <div class= "item3" id="pagination_container">
+            {% block pagination %}
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if page_object.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="{% url 'following' page_object.previous_page_number %}">
+                                Previous
+                            </a>
+                        </li>
+                    {% endif%}
+
+                    {% for page_number in page_object.paginator.get_elided_page_range %}   
+                        {% if page_object.number == page_number %}
+                            <li class="active page-item">
+                                <a class="page-link" href= "{% url "following" page_number %}"> {{page_number}}</a>
+                            </li>
+                        {% else %}
+                            {% if page_number == page_object.paginator.ELLIPSIS %}
+                                <li class="page-item"> <span class="page-link"> {{page_number }}</span></li>
+                            {% else %}
+                                <li class="page-item"> 
+                                    <a class="page-link" href= "{% url "following" page_number %}"> {{ page_number }}</a> 
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}    
+                    
+                    {% if page_object.has_next %}
+                        <li class="page-item"><a class="page-link" href="{% url 'following' page_object.next_page_number %}">Next</a></li>
+                    {% endif%}
+                    
+                </ul>
+            </nav>        
+            {% endblock %}    
+        </div>
+{% endblock %}

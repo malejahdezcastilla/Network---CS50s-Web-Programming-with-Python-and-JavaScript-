@@ -1,0 +1,224 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    {% if user == request.user  and profile_imgs.cover_pic is none%}
+        <div class= "pic_container">
+            <div class="form_pic_container">
+                <form id= "form_pic_profile" action="{% url "set_profile_img" "cover_img" %}" method= "POST">
+                    {% csrf_token %}
+                    <div class="form-group-container">
+                        <label id="header_pic_profile" for="url_image">Set cover image</label>
+                        <input type="text" name="cover_img" class="input-form-control-profile" id="url_image" placeholder="Enter a url">
+                    </div>
+                    <div class="form-group-profile">
+                        <button id="save_pic_button_profile" type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if user == request.user  and profile_imgs.avatar_pic is none%}
+        <div class="pic_container">    
+            <div class="form_pic_container">
+                <form id= "form_pic_profile" action="{% url "set_profile_img" "profile_img" %}" method= "POST">
+                    {% csrf_token %}
+                    <div class="form-group-container">
+                        <label id="header_pic_profile" for="url_image">Set profile image</label>
+                        <input name="profile_img" type="text" class="input-form-control-profile" id="url_image" placeholder="Enter a url">
+                    </div>
+                    <div class="form-group-profile">
+                        <button id="save_pic_button_profile" type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>    
+    {% endif %}
+
+    {% if profile_imgs.cover_pic %}
+        <div class="item_img_cover">
+            <img id= "ch_cover_img" src="{{profile_imgs.cover_pic}}">
+        </div>
+    {% else %}
+        <div class="item_img_cover">
+            <img id= "default_cover_img" src="https://wallpapers.com/images/high/dark-gradient-rpa97mj9dhic8raf.webp">
+        </div>
+    {% endif %}
+
+
+    {% if profile_imgs.avatar_pic %}
+        <div class="item_img">
+            <img id= "ch_profile_img" class="rounded-circle" src="{{profile_imgs.avatar_pic}}">
+        </div>
+    {% else %}
+        <div class="item_img">
+            <img id= "default_profile_img" class="rounded-circle" src="https://cdn-icons-png.freepik.com/512/12532/12532923.png?ga=GA1.1.443386239.1706632112">
+        </div>
+    {% endif %}  
+
+    <div class= "username_container">
+        <div> <span class= "user_name">{{user}} </span><br> </div>
+    </div>
+
+    {% if request.user != user %}
+        {% if request.user.username in followers %}
+            <div class= "follow_btn_container">
+                <form action = "{% url "follow_unfollow" user.username %}" method = "POST">
+                    {% csrf_token %}
+                        <button id="unfollow-btn" type= "submit" class= "btn btn-primary">
+                            <i class="bi bi-person-dash-fill"></i> Unfollow
+                        </button>
+                </form>
+            </div>
+        {% else %}
+            <div class= "follow_btn_container">
+                <form action = "{% url "follow_unfollow" user.username %}" method = "POST">
+                    {% csrf_token %}
+                        <button id="follow-btn" type= "submit" class= "btn btn-primary">
+                            <i class="bi bi-person-fill-check"></i> Follow
+                        </button>
+                </form>
+            </div>
+        {% endif %}       
+    {% endif %}
+
+    <div class= "profile_info_container">
+        <div class="span_profile_container">
+            <span class= "profile_info">{{num_posts}}</span>
+            <span class="profile-span">POSTS</span>
+        </div>
+        <div class="span_profile_container">
+            <span class= "profile_info">{{num_followers}}</span>
+            <span class="profile-span">FOLLOWERS</span>
+        </div>
+        <div class="span_profile_container">
+            <span class= "profile_info">{{num_following}}</span>
+            <span class="profile-span">FOLLOWING</span>
+        </div>
+    </div>
+
+    <div class= "profile_header_container">
+       <h2 class="header-profile">Activity</h2>
+    </div>   
+
+    <div class= "posts_container">
+        {% for post in page_objec %}
+            <div class="post_container">
+                {% if post.user.username == request.user.get_username %}
+                    <div>
+                        <button id="edit_button" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop-{{ post.id }}">
+                            Edit
+                        </button>
+                    </div>    
+                    
+                    <div class="index_modal_container">
+                        <div class="modal fade" id="staticBackdrop-{{ post.id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="staticBackdropLabel">Edit Post</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                {% csrf_token %}
+                                  <textarea rows= "4" id="post-content-id-{{ post.id }}" class= "form-control" name="post_content_" >{{ post.content }} </textarea>
+                              </div>
+                              <div class="modal-footer">
+                                <button id="close-button-edit" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button  id="save-button-edit" type="button" class="btn btn-primary" onclick= "saveChanges({{ post.id }})">Save changes</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div> 
+                    </div>        
+                {% endif %}
+
+                    <div class= "index-post-container">
+                        <div id="link_to_profile_container">
+                            <span id="link_to_profile_span">
+                                <a class="page-link" id= "link_to_profile_user" href= "{% url "user_profile" post.user.username 1 %}">@{{post.user.get_username}}</a>
+                            </span>
+                        </div>
+                        <div class= "span_post_content">
+                            <span id="content-{{ post.id }}" class="content_p_post">  {{ post.content }}</span><br>
+                        </div>  
+                        <div>
+                            <span id="date_creation" >{{ post.date_creation }}</span><br>
+                        </div>  
+                        <div class="index_likes_container">
+                            {% csrf_token %}
+                            {% if post.user.username != request.user.get_username %}
+                                {% if request.user in post.liked_by.all %}
+                                <button hidden id="like_button_{{post.id}}" type="button" class="btn-like" aria-label="like" onclick = "like({{ post.id }})">
+                                    <span> <i id="like_icon" class="bi bi-star"> </i> </span><br>
+                                </button>
+
+                                <button id="unlike_button_{{post.id}}" type="button" class="btn-unlike" aria-label="unlike" onclick = "unlike({{ post.id }})">
+                                    <span> <i id="unlike_icon" class="bi bi-star-fill"> </i> </span><br>
+                                </button>
+                            
+                                {% else %}
+                                <button id="like_button_{{post.id}}" type="button" class="btn-like" aria-label="like" onclick = "like({{ post.id }})">
+                                    <span> <i id="like_icon" class="bi bi-star"> </i> </span><br>
+                                </button>
+                                
+                                <button hidden id="unlike_button_{{post.id}}" type="button" class="btn-unlike" aria-label="unlike" onclick = "unlike({{ post.id }})">
+                                    <span> <i id="unlike_icon" class="bi bi-star-fill"> </i> </span><br>
+                                </button>
+                                {% endif %}
+                
+                                {% if post.liked_by.count > 0 %}
+                                    <span class= "num_likes"  id="likes_{{post.id}}">{{post.liked_by.count}}</span><br>
+                                {% else %}
+                                    <span class= "num_likes"  id="likes_{{post.id}}"></span><br>
+                                {% endif %}  
+
+                            {% elif post.liked_by.count == 0 and post.user.username == request.user.get_username %} 
+                            <span hidden class="bi bi-star"></span><br>
+                            
+                            {% elif post.user.username == request.user.get_username and post.liked_by.count > 0 %}
+                                <span class= "num_likes" id="likes_{{ post.id }}">
+                                    <i id= "unlike_icon" class="bi bi-star-fill"></i> {{post.liked_by.count}}</span><br>
+                            {% endif %}
+                        </div>  
+                    </div>    
+    </div>
+    {% endfor %}
+
+    <div class= "item3" id="pagination_container">
+        {% block pagination %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                {% if page_objec.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="{% url "user_profile" user page_objec.previous_page_number %}">
+                            Previous
+                        </a>
+                    </li>
+                {% endif%}
+
+                {% for page_number in page_objec.paginator.get_elided_page_range %}   
+                    {% if page_objec.number == page_number %}
+                        <li class="active page-item">
+                            <a class="page-link" href= "{% url "user_profile" user page_number %}"> {{page_number}}</a>
+                        </li>
+                    {% else %}
+                        {% if page_number == page_objec.paginator.ELLIPSIS %}
+                            <li class="page-item"> <span class="page-link"> {{page_number}}</span></li>
+                        {% else %}
+                            <li class="page-item"> 
+                                <a class="page-link" href= "{% url "user_profile" user page_number %}"> {{page_number}}</a> 
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}    
+                
+                {% if page_objec.has_next %}
+                    <li class="page-item"><a class="page-link" href="{% url "user_profile" user page_objec.next_page_number %}">Next</a></li>
+                {% endif%}
+                
+            </ul>
+        </nav>        
+        {% endblock %}    
+    </div>
+{%endblock%}
